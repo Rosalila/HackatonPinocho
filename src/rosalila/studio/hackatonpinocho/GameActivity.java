@@ -26,7 +26,7 @@ public class GameActivity extends BaseGameActivity {
 	private Camera mCamera;
 	
 	private ITextureRegion mSplashBackground;
-
+	private ITextureRegion mMainMenuBackground;
 	
 	private Scene mSplashScene;
 	private Scene mMainMenuScene;
@@ -45,7 +45,7 @@ public class GameActivity extends BaseGameActivity {
 			throws Exception {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
-		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_HEIGHT + 1, GameConstants.CAMERA_WIDTH + 1);
+		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), 2000, 2000);
 		mSplashBackground = BitmapTextureAtlasTextureRegionFactory.createFromAsset(splashTextureAtlas, this, "rosalila_logo.png");
 		
 		
@@ -80,7 +80,10 @@ public class GameActivity extends BaseGameActivity {
 			public void onTimePassed(TimerHandler pTimerHandler) {
 				mSplashScene.unregisterUpdateHandler(pTimerHandler);
 				
-				/*Load the main menu scene*/
+				createMenuResources();
+				createMenuScene();
+				
+				mEngine.setScene(mMainMenuScene);
 				
 			}
 		}));
@@ -89,12 +92,34 @@ public class GameActivity extends BaseGameActivity {
 		
 	}
 	
-	public void createMenuResources() {
+	/* 
+	 * Loads in memory the resources used in the main menu scene
+	 * */
+	private void createMenuResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
 		BuildableBitmapTextureAtlas mainMenuAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT);
+		mMainMenuBackground = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mainMenuAtlas, this, "main_menu_bg.png");
 		
+		try {
+		    mainMenuAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
+		} catch (TextureAtlasBuilderException exception) {
+			Log.e(TAG, exception.getMessage());
+		}
 		
+		mainMenuAtlas.load();
+		
+	}
+	
+	/* 
+	 * Creates and populates the Scene used as main menu
+	 * */
+	private void createMenuScene() {
+		mMainMenuScene = new Scene();
+		mMainMenuScene.setBackgroundEnabled(false);
+		
+		Sprite background = new Sprite(0, 0, GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT, mMainMenuBackground, getVertexBufferObjectManager());
+		mMainMenuScene.attachChild(background);
 	}
 
 }
