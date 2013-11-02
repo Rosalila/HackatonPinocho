@@ -49,12 +49,12 @@ public class GameActivity extends BaseGameActivity {
 			throws Exception {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
-		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), 2000, 2000);
+		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT);
 		mSplashBackground = BitmapTextureAtlasTextureRegionFactory.createFromAsset(splashTextureAtlas, this, "rosalila_logo.png");
 		
 		
 		try {
-			splashTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(1, 1, 1));
+			splashTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
 		} catch (TextureAtlasBuilderException exception) {
 			Log.e(TAG, "Error building splash screen resources");
 		}		
