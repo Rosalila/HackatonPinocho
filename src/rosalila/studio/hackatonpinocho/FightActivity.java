@@ -120,7 +120,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		final Sprite background = new Sprite(0,0,this.bgFaceTextureRegion,this.getVertexBufferObjectManager());
 		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
 		player2 = new Player(centerX, centerY+100, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
-		final ButtonKick btn_kick = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager());		
+		final ButtonKick btn_kick = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1);		
 		
 
 		scene.attachChild(background);
@@ -223,13 +223,15 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		private final PhysicsHandler mPhysicsHandler;
 		
 		String state;
+		Player player;
 
-		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager) {
+		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager,Player player) {
 			super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 			this.mPhysicsHandler = new PhysicsHandler(this);
 			this.registerUpdateHandler(this.mPhysicsHandler);
 			this.mPhysicsHandler.setVelocity(FightActivity.DEMO_VELOCITY, FightActivity.DEMO_VELOCITY);
 			this.state="idle";
+			this.player=player;
 		}
 
 		@Override
@@ -261,6 +263,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		@Override
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+			player.touched();
 			return mFlippedHorizontal;
 		}
 	}
@@ -273,7 +276,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	{
 		if(pTouchAreaLocalX<1280/2)
 		{
-			player1.touched();
+			
 		}
 		return false;
 >>>>>>> 6c2597b6b1b1dc730c0eaf020ff8d265e7639da5
