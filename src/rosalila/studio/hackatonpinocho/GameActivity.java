@@ -17,6 +17,7 @@ import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 
+import android.content.Intent;
 import android.util.Log;
 
 public class GameActivity extends BaseGameActivity {
@@ -87,6 +88,9 @@ public class GameActivity extends BaseGameActivity {
 		
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
 		
+		Intent intent = new Intent(this, FightActivity.class);
+		startActivity(intent);      
+		finish();
 	}
 	
 	public void createMenuResources() {
