@@ -20,7 +20,6 @@ import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 public class GameActivity extends BaseGameActivity {
