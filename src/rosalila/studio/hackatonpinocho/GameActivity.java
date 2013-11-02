@@ -6,8 +6,10 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
+import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
@@ -17,6 +19,8 @@ import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 
+import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 public class GameActivity extends BaseGameActivity {
@@ -89,7 +93,6 @@ public class GameActivity extends BaseGameActivity {
 		}));
 		
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
-		
 	}
 	
 	/* 
@@ -120,6 +123,17 @@ public class GameActivity extends BaseGameActivity {
 		
 		Sprite background = new Sprite(0, 0, GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT, mMainMenuBackground, getVertexBufferObjectManager());
 		mMainMenuScene.attachChild(background);
+		
+		mMainMenuScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
+			
+			@Override
+			public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+				Intent intent = new Intent(GameActivity.this, FightActivity.class);
+				startActivity(intent);      
+				finish();
+				return false;
+			}
+		});
 	}
 
 }
