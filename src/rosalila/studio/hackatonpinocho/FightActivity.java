@@ -208,6 +208,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		@Override
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+			System.exit(0);
 			return mFlippedHorizontal;
 		}
 	}
@@ -220,7 +221,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	{
 		if(pTouchAreaLocalX<1280/2)
 		{
-			player1.touched();
+			
 		}
 		return false;
 	}
