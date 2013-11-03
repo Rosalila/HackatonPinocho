@@ -12,6 +12,7 @@ import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
+import org.andengine.entity.sprite.AnimatedSprite.IAnimationListener;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
@@ -22,6 +23,10 @@ import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
+import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
+import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
+import org.andengine.opengl.texture.atlas.buildable.builder.BlackPawnTextureAtlasBuilder;
+import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder.TextureAtlasBuilderException;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
@@ -78,6 +83,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	
 	private BitmapTextureAtlas buttonBitmapTextureAtlas;
 	private TiledTextureRegion buttonTextureRegion;
+	
+	private TiledTextureRegion mExplosionTiledTexture;
 
 	ArrayList<Sprite> victories_player1;
 	ArrayList<Sprite> victories_player2;
@@ -96,6 +103,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private PhysicsWorld mPhysicsWorld;
 
 	private Scene mScene;
+	
+	private boolean mIsFinished = false;
 
 	// ===========================================================
 	// Constructors
@@ -168,6 +177,18 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.buttonBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
 		this.buttonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.buttonBitmapTextureAtlas, this, "button.png", 0, 0, 1, 1);
 		this.buttonBitmapTextureAtlas.load();
+		
+		BuildableBitmapTextureAtlas explosionTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), 1925, 388);
+		mExplosionTiledTexture = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(explosionTextureAtlas, getAssets(), "damage_sprite.png", 5, 1);
+		
+		try {
+			explosionTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 1, 1));
+			
+		} catch (TextureAtlasBuilderException exception) {
+			Log.e(TAG, exception.getMessage());
+		}
+		
+		explosionTextureAtlas.load();
 		
 	}
 
@@ -325,11 +346,6 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			mPlayer = player;
 			this.fight_activity=fight_activity;
 		}
-
-		@Override
-		protected void onManagedUpdate(final float pSecondsElapsed)	{
-			super.onManagedUpdate(pSecondsElapsed);
-		}
 		
 		@Override
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY)
@@ -341,14 +357,10 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				if(fight_activity.ko.isVisible())
 				{
 					fight_activity.resetRound();
-				}else
-				{
-					//fight_activity.playerWinsRound(mPlayer.number);
+				} else {
 					if (!mPlayer.isMoving()) {
-						Log.d(TAG, "On Ground");
 						mPlayer.jump();	
 					} else {
-						Log.d(TAG, "Jumping");
 						mPlayer.dive();
 					}
 				}
@@ -375,6 +387,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	
 	void resetRound()
 	{
+		mIsFinished = false;
 		ko.setVisible(false);
 		player1.mBody.setTransform((PLAYER1_INITIAL_X+210.0f/2.0f)/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, INITIAL_Y/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
 		player2.mBody.setTransform((PLAYER2_INITIAL_X+210.0f/2.0f)/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, INITIAL_Y/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
@@ -449,23 +462,66 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			    		p.setCurrentTileIndex(0);
 			        p.mBody.setLinearVelocity(new Vector2(0,0));
 			    } else if (dataA instanceof Player && dataB instanceof Player) {
-			    	Player playerA = (Player)dataA;
-			    	Player playerB = (Player)dataB;
-			    	
-		    		if(!ko.isVisible()
-		    				&&!player1_wins.isVisible()
-		    				&&!player2_wins.isVisible())
-		    		{
-				    	if (playerA.getY() > playerB.getY())
-				    	{
-				    		playerA.setCurrentTileIndex(4);
-				    		playerWinsRound(2);
-				    	} else
-				    	{
-				    		playerB.setCurrentTileIndex(4);
-				    		playerWinsRound(1);
+			    
+			    	if (!mIsFinished) {
+			    		final Player playerA = (Player)dataA;
+				    	final Player playerB = (Player)dataB;
+				    	
+				    	float posX;
+				    	if (playerA.getX() > playerB.getX()) {
+				    		posX = playerA.getX();
+				    	} else {
+				    	    posX = playerB.getX();	
 				    	}
-		    		}
+				    	
+				    	mIsFinished = true;
+				    	
+				    	final AnimatedSprite damage_sprite = new AnimatedSprite(posX, playerA.getY(), mExplosionTiledTexture, getVertexBufferObjectManager());
+				    	mScene.attachChild(damage_sprite);
+				    	damage_sprite.animate(200, false, new IAnimationListener() {
+							
+							@Override
+							public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
+									int pInitialLoopCount) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void onAnimationLoopFinished(AnimatedSprite pAnimatedSprite,
+									int pRemainingLoopCount, int pInitialLoopCount) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void onAnimationFrameChanged(AnimatedSprite pAnimatedSprite,
+									int pOldFrameIndex, int pNewFrameIndex) {
+								// TODO Auto-generated method stub
+								
+							}
+							
+							@Override
+							public void onAnimationFinished(AnimatedSprite pAnimatedSprite) {
+								if(!ko.isVisible()
+					    				&&!player1_wins.isVisible()
+					    				&&!player2_wins.isVisible()) {
+							    	if (playerA.getY() > playerB.getY()) {
+							    		playerA.setCurrentTileIndex(4);
+							    		playerWinsRound(2);
+							    	} else
+							    	{
+							    		playerB.setCurrentTileIndex(4);
+							    		playerWinsRound(1);
+							    	}
+							    	
+							    	mScene.detachChild(damage_sprite);
+							    	
+					    		}
+							}
+						});
+				    
+			    	}
 			    }
 			}
 		};

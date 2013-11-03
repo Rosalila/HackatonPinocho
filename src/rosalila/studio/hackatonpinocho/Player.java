@@ -1,5 +1,6 @@
 package rosalila.studio.hackatonpinocho;
 
+import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
@@ -41,7 +42,10 @@ public  class Player extends AnimatedSprite {
 			final VertexBufferObjectManager pVertexBufferObjectManager, PhysicsWorld world, int number) {
 		super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 		mWorld = world;
-		mBody = PhysicsFactory.createBoxBody(mWorld, this, BodyType.DynamicBody, mFixture);
+		
+		//Hitbox 
+		Rectangle hitbox = new Rectangle(pX, pY, 150, 150, getVertexBufferObjectManager());
+		mBody = PhysicsFactory.createBoxBody(mWorld, hitbox, BodyType.DynamicBody, mFixture);
 		mBody.setFixedRotation(true);
 		mBody.setUserData(this);
 		mWorld.registerPhysicsConnector(new PhysicsConnector(this, mBody));
