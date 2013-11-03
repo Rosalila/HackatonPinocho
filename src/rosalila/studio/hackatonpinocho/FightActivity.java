@@ -1,28 +1,34 @@
 package rosalila.studio.hackatonpinocho;
 
 import org.andengine.engine.camera.Camera;
-import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.RatioResolutionPolicy;
-
+import org.andengine.entity.primitive.Rectangle;
 import org.andengine.entity.scene.IOnAreaTouchListener;
 import org.andengine.entity.scene.ITouchArea;
-
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.scene.background.Background;
 import org.andengine.entity.sprite.AnimatedSprite;
 import org.andengine.entity.sprite.Sprite;
 import org.andengine.entity.util.FPSLogger;
-
+import org.andengine.extension.physics.box2d.PhysicsConnector;
+import org.andengine.extension.physics.box2d.PhysicsFactory;
+import org.andengine.extension.physics.box2d.PhysicsWorld;
 import org.andengine.input.touch.TouchEvent;
-
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+
+import android.hardware.SensorManager;
+
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.physics.box2d.Body;
+import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -33,11 +39,9 @@ import org.andengine.ui.activity.SimpleBaseGameActivity;
  */
 
 public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouchListener {
-
-	// ===========================================================
-	// Fields
-	// ===========================================================
-
+	
+	private static final FixtureDef GROUND_FIXTURE = PhysicsFactory.createFixtureDef(0.5f, 0.5f, 0.5f);
+	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mFaceTextureRegion;
 
@@ -45,7 +49,11 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private BitmapTextureAtlas bgBitmapTextureAtlas;
 	private TiledTextureRegion bgFaceTextureRegion;
 	
-	Player player1,player2;
+	private Player player1,player2;
+	
+	private PhysicsWorld mPhysicsWorld;
+
+	private Scene mScene;
 
 	// ===========================================================
 	// Constructors
@@ -85,86 +93,73 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	public Scene onCreateScene() {
 		this.mEngine.registerUpdateHandler(new FPSLogger());
 
-		final Scene scene = new Scene();
-		scene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
-
+		mScene = new Scene();
+		mScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
+		
+		mPhysicsWorld = new PhysicsWorld(new Vector2(0.0f, SensorManager.GRAVITY_EARTH), false);
+		mScene.registerUpdateHandler(mPhysicsWorld);
+		
 		final float centerX = (GameConstants.CAMERA_WIDTH - this.mFaceTextureRegion.getWidth()) / 2;
 		final float centerY = (GameConstants.CAMERA_HEIGHT - this.mFaceTextureRegion.getHeight()) / 2;
 		
 		final Sprite background = new Sprite(0,0,this.bgFaceTextureRegion,this.getVertexBufferObjectManager());
-		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
-		player2 = new Player(centerX, centerY+100, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
+		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld);
+		player2 = new Player(centerX, centerY+100, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld);
 		final ButtonKick btn_kick = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1);		
 		
-
-		scene.attachChild(background);
-		scene.attachChild(player1);
-		scene.attachChild(player2);
-		scene.attachChild(btn_kick);
+		createGroundAndWalls();
 		
-		scene.registerTouchArea(btn_kick);
-		scene.setOnAreaTouchListener(this);
+		mScene.attachChild(background);
+		mScene.attachChild(player1);
+		mScene.attachChild(player2);
+		mScene.attachChild(btn_kick);
+		
+		mScene.registerTouchArea(btn_kick);
+		mScene.setOnAreaTouchListener(this);
 
-		return scene;
+		return mScene;
 	}
-
-	// ===========================================================
-	// Methods
-	// ===========================================================
-
-	// ===========================================================
-	// Inner and Anonymous Classes
-	// ===========================================================
-
-
 	
+	
+	/*
+	 * Creates the ground and walls to avoid the players get of
+	 * limits
+	 * */
+	private void createGroundAndWalls() {
+		Rectangle ground = new Rectangle(0, 0, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
+		Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, ground, BodyType.StaticBody, GROUND_FIXTURE);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ground, groundBody));
+		mScene.attachChild(ground);
+		
+		Rectangle leftWall = new Rectangle(0, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
+		Body leftWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, leftWall, BodyType.StaticBody, GROUND_FIXTURE);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftWall, leftWallBody));
+		mScene.attachChild(leftWall);
+		
+		Rectangle rightWall = new Rectangle(GameConstants.CAMERA_WIDTH, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
+		Body rightWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, rightWall, BodyType.StaticBody, GROUND_FIXTURE);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightWall, rightWallBody));
+		mScene.attachChild(rightWall);
+		
+		Rectangle roof = new Rectangle(0, GameConstants.CAMERA_HEIGHT, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
+		Body roofBody = PhysicsFactory.createBoxBody(mPhysicsWorld, roof, BodyType.StaticBody, GROUND_FIXTURE);
+		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(roof, roofBody));
+		mScene.attachChild(roof);
+	}
 	
 	
 	private static class ButtonKick extends AnimatedSprite {
-		private final PhysicsHandler mPhysicsHandler;
-		
-		String state;
-		Player player;
+		Player mPlayer;
 
-		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager,Player player) {
+		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager, Player player) {
 			super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
-			this.mPhysicsHandler = new PhysicsHandler(this);
-			this.registerUpdateHandler(this.mPhysicsHandler);
-			this.mPhysicsHandler.setVelocity(GameConstants.DEMO_VELOCITY, GameConstants.DEMO_VELOCITY);
-			this.state="idle";
-			this.player=player;
+			mPlayer = player;
 		}
-
-		@Override
-		protected void onManagedUpdate(final float pSecondsElapsed) {
-			if(state!="idle")
-			{
-				if(this.mX < 0) {
-					this.mPhysicsHandler.setVelocityX(GameConstants.DEMO_VELOCITY);
-				} else if(this.mX + this.getWidth() > GameConstants.CAMERA_WIDTH) {
-					this.mPhysicsHandler.setVelocityX(-GameConstants.DEMO_VELOCITY);
-				}
-	
-				if(this.mY < 0) {
-					this.mPhysicsHandler.setVelocityY(GameConstants.DEMO_VELOCITY);
-				} else if(this.mY + this.getHeight() > GameConstants.CAMERA_HEIGHT) {
-					this.mPhysicsHandler.setVelocityY(-GameConstants.DEMO_VELOCITY);
-				}
-			}else if(state=="idle")
-			{
-				this.mPhysicsHandler.setVelocityX(0);
-				this.mPhysicsHandler.setVelocityY(0);
-
-			}
-
-			super.onManagedUpdate(pSecondsElapsed);
-		}
-
 		
 		@Override
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
-			player.touched();
-			return mFlippedHorizontal;
+			mPlayer.jump();
+			return false;
 		}
 	}
 

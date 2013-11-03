@@ -55,7 +55,7 @@ public class GameActivity extends BaseGameActivity {
 		try {
 			splashTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
 		} catch (TextureAtlasBuilderException exception) {
-			Log.e(TAG, "Error building splash screen resources");
+			Log.e(TAG, exception.getMessage());
 		}		
 		splashTextureAtlas.load();
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
