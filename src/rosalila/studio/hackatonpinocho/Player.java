@@ -19,16 +19,18 @@ public  class Player extends AnimatedSprite {
 	private Body mBody;
 	private PhysicsWorld mWorld;
 	private FixtureDef mFixture = PhysicsFactory.createFixtureDef(0.5f, 0.5f, 0.5f);
+	int number;
 	
 	private boolean mPendingJump;
 	
 	public Player(final float pX, final float pY, final TiledTextureRegion pTextureRegion, 
-			final VertexBufferObjectManager pVertexBufferObjectManager, PhysicsWorld world) {
+			final VertexBufferObjectManager pVertexBufferObjectManager, PhysicsWorld world,int number) {
 		super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 		mWorld = world;
 		mBody = PhysicsFactory.createBoxBody(mWorld, this, BodyType.DynamicBody, mFixture);
 		mWorld.registerPhysicsConnector(new PhysicsConnector(this, mBody));
 		mPendingJump = false;
+		this.number=number;
 	}
 	
 	public void jump() {

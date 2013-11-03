@@ -57,6 +57,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	ArrayList<Sprite> victories_player1;
 	ArrayList<Sprite> victories_player2;
 	
+	int ROUNDS = 5;
+	
 	private Player player1,player2;
 	
 	private PhysicsWorld mPhysicsWorld;
@@ -115,22 +117,26 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		final Sprite background = new Sprite(0,0,this.bgFaceTextureRegion,this.getVertexBufferObjectManager());
 
-		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld);
-		player2 = new Player(centerX+200, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld);
-		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1);
-		final ButtonKick btn_kick2 = new ButtonKick(100, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2);
+		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,1);
+		player2 = new Player(centerX+200, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,2);
+		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1,this);
+		final ButtonKick btn_kick2 = new ButtonKick(100, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2,this);
 		
 		victories_player1=new ArrayList<Sprite>();
 		victories_player2=new ArrayList<Sprite>();
 		
-		for(int i=0;i<5;i++)
+		for(int i=0;i<ROUNDS;i++)
 		{
-			victories_player1.add(new Sprite(1280/2-60-i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager()));
+			Sprite sprite_temp = new Sprite(1280/2-60-i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager());
+			sprite_temp.setVisible(false);
+			victories_player1.add(sprite_temp);
 		}
 		
-		for(int i=0;i<5;i++)
+		for(int i=0;i<ROUNDS;i++)
 		{
-			victories_player1.add(new Sprite(1280/2+60+i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager()));
+			Sprite sprite_temp = new Sprite(1280/2+60+i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager());
+			sprite_temp.setVisible(false);
+			victories_player1.add(sprite_temp);
 		}
 
 		mScene.attachChild(background);
@@ -151,6 +157,30 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		return mScene;
 	}
+	
+	/*
+	 * Function called when a player wins a round
+	 * */
+	private void playerWinsRound(int player_number)
+	{
+		if(player_number==2)
+		{
+			boolean game_over = false;
+			for(int i=0;i<victories_player2.size();i++)
+			{
+				if(!victories_player2.get(i).isVisible())
+				{
+					victories_player2.get(i).setVisible(true);
+					if(i==victories_player2.size()-1)
+						game_over=true;
+					break;
+				}
+			}
+			if(game_over)
+				System.exit(0);
+		}
+	}
+	
 	
 	
 	/*
@@ -182,11 +212,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	
 	private static class ButtonKick extends AnimatedSprite {
 		Player mPlayer;
+		FightActivity fight_activity;
 
-		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager, Player player) {
+		public ButtonKick(final float pX, final float pY, final TiledTextureRegion pTextureRegion, final VertexBufferObjectManager pVertexBufferObjectManager, Player player,FightActivity fight_activity)
+		{
 			super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 			this.setAlpha(0.5f);
 			mPlayer = player;
+			this.fight_activity=fight_activity;
 		}
 
 		@Override
@@ -200,11 +233,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			if (pSceneTouchEvent.isActionDown())
 			{
 				this.setAlpha(1.0f);
+				
+				fight_activity.playerWinsRound(mPlayer.number);
 			}
 			if (pSceneTouchEvent.isActionUp())
 			{
 				this.setAlpha(0.5f);
 			}
+			
 			mPlayer.jump();
 			return false;
 		}
@@ -223,7 +259,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
     	if(OuyaController.BUTTON_L1==event.getKeyCode())
-    	{
+    	{ 
     		player1.jump();
     	}else if(OuyaController.BUTTON_R1==event.getKeyCode())
     	{
