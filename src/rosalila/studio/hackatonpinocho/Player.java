@@ -22,6 +22,7 @@ public  class Player extends AnimatedSprite {
 	int number;
 	
 	private boolean mPendingJump;
+	private boolean mPendingDive;
 	
 	public Player(final float pX, final float pY, final TiledTextureRegion pTextureRegion, 
 			final VertexBufferObjectManager pVertexBufferObjectManager, PhysicsWorld world,int number) {
@@ -37,11 +38,16 @@ public  class Player extends AnimatedSprite {
 		mPendingJump = true;
 	}
 	
+	public void dive() {
+		mPendingDive = true;
+	}
+	
 	public void onManagedUpdate(float elapsedSeconds) {
 		super.onManagedUpdate(elapsedSeconds);
 		
 		if (mPendingJump) {
 			mBody.applyForce(new Vector2(0.0f, -SensorManager.GRAVITY_EARTH * 2), mBody.getWorldCenter());
+			mPendingJump = false;
 		}
 	}
 
