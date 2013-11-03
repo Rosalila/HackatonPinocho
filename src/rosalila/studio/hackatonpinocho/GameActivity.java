@@ -108,9 +108,7 @@ public class GameActivity extends BaseGameActivity {
 		} catch (TextureAtlasBuilderException exception) {
 			Log.e(TAG, exception.getMessage());
 		}
-		
-		mainMenuAtlas.load();
-		
+		mainMenuAtlas.load();		
 	}
 	
 	/* 
