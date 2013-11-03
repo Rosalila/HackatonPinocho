@@ -25,12 +25,12 @@ import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
 import tv.ouya.console.api.OuyaController;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.hardware.SensorManager;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
-import com.badlogic.gdx.physics.box2d.FixtureDef;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -41,8 +41,6 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
  */
 
 public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouchListener {
-	
-	private static final FixtureDef GROUND_FIXTURE = PhysicsFactory.createFixtureDef(0.5f, 0.5f, 0.5f);
 	
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mFaceTextureRegion;
@@ -88,10 +86,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	public void onCreateResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
-		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 64, 32, TextureOptions.BILINEAR);
-		this.mFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.mBitmapTextureAtlas, this, "face_circle_tiled.png", 0, 0, 2, 1);
+		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
+		this.mFaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 210, 210, 
+				"1.png",
+				"2.png",
+				"3.png",
+				"4.png",
+				"5.png");
 		this.mBitmapTextureAtlas.load();
-
 		
 		this.bgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1280, 720, TextureOptions.BILINEAR);
 		this.bgFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.bgBitmapTextureAtlas, this, "background.png", 0, 0, 1, 1);
@@ -163,7 +165,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	 * */
 	private void playerWinsRound(int player_number)
 	{
-		if(player_number==2)
+		if(player_number == 2)
 		{
 			boolean game_over = false;
 			for(int i=0;i<victories_player2.size();i++)
@@ -181,36 +183,36 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		}
 	}
 	
-	
-	
 	/*
 	 * Creates the ground and walls to avoid the players get of
 	 * limits
 	 * */
 	private void createGroundAndWalls() {
 		Rectangle ground = new Rectangle(0, 0, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
-		Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, ground, BodyType.StaticBody, GROUND_FIXTURE);
+		Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, ground, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ground, groundBody));
 		mScene.attachChild(ground);
 		
 		Rectangle leftWall = new Rectangle(0, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
-		Body leftWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, leftWall, BodyType.StaticBody, GROUND_FIXTURE);
+		Body leftWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, leftWall, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftWall, leftWallBody));
 		mScene.attachChild(leftWall);
 		
 		Rectangle rightWall = new Rectangle(GameConstants.CAMERA_WIDTH, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
-		Body rightWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, rightWall, BodyType.StaticBody, GROUND_FIXTURE);
+		Body rightWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, rightWall, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightWall, rightWallBody));
 		mScene.attachChild(rightWall);
 		
 		Rectangle roof = new Rectangle(0, GameConstants.CAMERA_HEIGHT, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
-		Body roofBody = PhysicsFactory.createBoxBody(mPhysicsWorld, roof, BodyType.StaticBody, GROUND_FIXTURE);
+		Body roofBody = PhysicsFactory.createBoxBody(mPhysicsWorld, roof, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(roof, roofBody));
 		mScene.attachChild(roof);
 	}
 	
 	
 	private static class ButtonKick extends AnimatedSprite {
+		private static final String TAG = ButtonKick.class.getSimpleName();
+		
 		Player mPlayer;
 		FightActivity fight_activity;
 
@@ -223,8 +225,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		}
 
 		@Override
-		protected void onManagedUpdate(final float pSecondsElapsed)
-		{
+		protected void onManagedUpdate(final float pSecondsElapsed)	{
 			super.onManagedUpdate(pSecondsElapsed);
 		}
 		
@@ -232,8 +233,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
 			if (pSceneTouchEvent.isActionDown())
 			{
-				this.setAlpha(1.0f);
-				
+				this.setAlpha(1.0f);			
 				fight_activity.playerWinsRound(mPlayer.number);
 			}
 			if (pSceneTouchEvent.isActionUp())
@@ -241,7 +241,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				this.setAlpha(0.5f);
 			}
 			
-			mPlayer.jump();
+			if (!mPlayer.isMoving()) {
+				Log.d(TAG, "On Ground");
+				mPlayer.jump();	
+			} else {
+				Log.d(TAG, "Jumping");
+				mPlayer.dive();
+			}
+			
 			return false;
 		}
 	}
@@ -250,8 +257,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,
 			ITouchArea pTouchArea, float pTouchAreaLocalX,
-			float pTouchAreaLocalY)
-	{
+			float pTouchAreaLocalY)	{
 		return false;
 	}
 	
