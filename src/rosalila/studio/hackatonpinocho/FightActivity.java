@@ -17,6 +17,8 @@ import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
+import org.andengine.extension.physics.box2d.util.Vector2Pool;
+import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
@@ -24,10 +26,12 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+
 import tv.ouya.console.api.OuyaController;
+import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.hardware.SensorManager;
+
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
@@ -49,13 +53,31 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private BitmapTextureAtlas bgBitmapTextureAtlas;
 	private TiledTextureRegion bgFaceTextureRegion;
 	
-	private BitmapTextureAtlas victoryBitmapTextureAtlas;
-	private TiledTextureRegion victoryFaceTextureRegion;
+	private BitmapTextureAtlas victory1BitmapTextureAtlas;
+	private TiledTextureRegion victory1FaceTextureRegion;
+	
+	private BitmapTextureAtlas victory2BitmapTextureAtlas;
+	private TiledTextureRegion victory2FaceTextureRegion;
+	
+	private BitmapTextureAtlas player1winsBitmapTextureAtlas;
+	private TiledTextureRegion player1winsFaceTextureRegion;
+	
+	private BitmapTextureAtlas player2winsBitmapTextureAtlas;
+	private TiledTextureRegion player2winsFaceTextureRegion;
+	
+	private BitmapTextureAtlas koBitmapTextureAtlas;
+	private TiledTextureRegion koFaceTextureRegion;
 
 	ArrayList<Sprite> victories_player1;
 	ArrayList<Sprite> victories_player2;
 	
+	Sprite player1_wins;
+	Sprite player2_wins;
+	Sprite ko;
+	
 	int ROUNDS = 5;
+	int PLAYER1_INITIAL_X = 1280/2-400;
+	int PLAYER2_INITIAL_X = 1280/2+400;
 	
 	private Player player1,player2;
 	
@@ -99,9 +121,25 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.bgFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.bgBitmapTextureAtlas, this, "background.png", 0, 0, 1, 1);
 		this.bgBitmapTextureAtlas.load();
 		
-		this.victoryBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
-		this.victoryFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victoryBitmapTextureAtlas, this, "victory.png", 0, 0, 1, 1);
-		this.victoryBitmapTextureAtlas.load();
+		this.victory1BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
+		this.victory1FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory1BitmapTextureAtlas, this, "victory1.png", 0, 0, 1, 1);
+		this.victory1BitmapTextureAtlas.load();
+		
+		this.victory2BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
+		this.victory2FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory2BitmapTextureAtlas, this, "victory2.png", 0, 0, 1, 1);
+		this.victory2BitmapTextureAtlas.load();
+		
+		this.player1winsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
+		this.player1winsFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.player1winsBitmapTextureAtlas, this, "player1_wins.png", 0, 0, 1, 1);
+		this.player1winsBitmapTextureAtlas.load();
+		
+		this.player2winsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
+		this.player2winsFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.player2winsBitmapTextureAtlas, this, "player2_wins.png", 0, 0, 1, 1);
+		this.player2winsBitmapTextureAtlas.load();
+		
+		this.koBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
+		this.koFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.koBitmapTextureAtlas, this, "knockout.png", 0, 0, 1, 1);
+		this.koBitmapTextureAtlas.load();
 	}
 
 	@Override
@@ -122,24 +160,30 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,1);
 		player2 = new Player(centerX+200, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,2);
 		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1,this);
-		final ButtonKick btn_kick2 = new ButtonKick(100, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2,this);
+		final ButtonKick btn_kick2 = new ButtonKick(1280-this.mFaceTextureRegion.getWidth(), 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2,this);
 		
 		victories_player1=new ArrayList<Sprite>();
 		victories_player2=new ArrayList<Sprite>();
 		
 		for(int i=0;i<ROUNDS;i++)
 		{
-			Sprite sprite_temp = new Sprite(1280/2-60-i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager());
+			Sprite sprite_temp = new Sprite(1280/2-60-i*50,50,this.victory1FaceTextureRegion, this.getVertexBufferObjectManager());
 			sprite_temp.setVisible(false);
 			victories_player1.add(sprite_temp);
 		}
 		
 		for(int i=0;i<ROUNDS;i++)
 		{
-			Sprite sprite_temp = new Sprite(1280/2+60+i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager());
+			Sprite sprite_temp = new Sprite(1280/2+60+i*50,50,this.victory2FaceTextureRegion, this.getVertexBufferObjectManager());
 			sprite_temp.setVisible(false);
-			victories_player1.add(sprite_temp);
+			victories_player2.add(sprite_temp);
 		}
+		player1_wins=new Sprite(1280/2-player1winsFaceTextureRegion.getWidth()/2, 0, player1winsFaceTextureRegion, this.getVertexBufferObjectManager());
+		player1_wins.setVisible(false);
+		player2_wins=new Sprite(1280/2-player2winsFaceTextureRegion.getWidth()/2, 0, player2winsFaceTextureRegion, this.getVertexBufferObjectManager());
+		player2_wins.setVisible(false);
+		ko=new Sprite(1280/2-koFaceTextureRegion.getWidth()/2, 0, koFaceTextureRegion, this.getVertexBufferObjectManager());
+		ko.setVisible(false);
 
 		mScene.attachChild(background);
 		mScene.attachChild(player1);
@@ -150,6 +194,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			mScene.attachChild(victories_player1.get(i));
 		for(int i=0;i<victories_player2.size();i++)
 			mScene.attachChild(victories_player2.get(i));
+		mScene.attachChild(player1_wins);
+		mScene.attachChild(player2_wins);
+		mScene.attachChild(ko);
 		
 		mScene.registerTouchArea(btn_kick1);
 		mScene.registerTouchArea(btn_kick2);
@@ -165,11 +212,29 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	 * */
 	private void playerWinsRound(int player_number)
 	{
+		if(player_number == 1)
+		{
+			boolean game_over = false;
+			for(int i=0;i<victories_player1.size();i++)
+			{
+				if(!victories_player1.get(i).isVisible())
+				{
+					ko.setVisible(true);
+					victories_player1.get(i).setVisible(true);
+					if(i==victories_player1.size()-1)
+						game_over=true;
+					break;
+				}
+			}
+			if(game_over)
+				player1_wins.setVisible(true);
+		}
 		if(player_number == 2)
 		{
 			boolean game_over = false;
 			for(int i=0;i<victories_player2.size();i++)
 			{
+				ko.setVisible(true);
 				if(!victories_player2.get(i).isVisible())
 				{
 					victories_player2.get(i).setVisible(true);
@@ -179,7 +244,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				}
 			}
 			if(game_over)
-				System.exit(0);
+				player2_wins.setVisible(true);
 		}
 	}
 	
@@ -234,8 +299,19 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		{
 			if (pSceneTouchEvent.isActionDown())
 			{
-				this.setAlpha(1.0f);			
-				fight_activity.playerWinsRound(mPlayer.number);
+				this.setAlpha(1.0f);
+				if(fight_activity.player1_wins.isVisible()
+				|| fight_activity.player2_wins.isVisible())
+				{
+					System.exit(0);
+				}else
+				if(fight_activity.ko.isVisible())
+				{
+					fight_activity.resetRound();
+				}else
+				{
+					fight_activity.playerWinsRound(mPlayer.number);
+				}
 			}
 			if (pSceneTouchEvent.isActionUp())
 			{
@@ -253,7 +329,15 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			return false;
 		}
 	}
-
+	
+	void resetRound()
+	{
+		ko.setVisible(false);
+		player1.mBody.setTransform(PLAYER1_INITIAL_X/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 720/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+		player2.mBody.setTransform(PLAYER2_INITIAL_X/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 720/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+		player1.mBody.setLinearVelocity(new Vector2(0,0));
+		player2.mBody.setLinearVelocity(new Vector2(0,0));
+	}
 
 	@Override
 	public boolean onAreaTouched(TouchEvent pSceneTouchEvent,

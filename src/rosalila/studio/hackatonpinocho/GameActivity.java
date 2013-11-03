@@ -19,8 +19,11 @@ import org.andengine.opengl.texture.atlas.buildable.builder.ITextureAtlasBuilder
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.ui.activity.BaseGameActivity;
 
+import tv.ouya.console.api.OuyaController;
+
 import android.content.Intent;
 import android.util.Log;
+import android.view.KeyEvent;
 
 public class GameActivity extends BaseGameActivity {
 
@@ -132,5 +135,4 @@ public class GameActivity extends BaseGameActivity {
 			}
 		});
 	}
-
 }

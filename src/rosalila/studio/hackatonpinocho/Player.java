@@ -20,7 +20,7 @@ public  class Player extends AnimatedSprite
     {
 
 	private static final String TAG = Player.class.getSimpleName();
-	private Body mBody;
+	public Body mBody;
 	private PhysicsWorld mWorld;
 	private FixtureDef mFixture = PhysicsFactory.createFixtureDef(0.5f, 0.5f, 0.5f);
 	private FacingSide mSide;
