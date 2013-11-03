@@ -6,8 +6,10 @@ import org.andengine.engine.handler.timer.TimerHandler;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
 import org.andengine.engine.options.resolutionpolicy.FillResolutionPolicy;
+import org.andengine.entity.scene.IOnSceneTouchListener;
 import org.andengine.entity.scene.Scene;
 import org.andengine.entity.sprite.Sprite;
+import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegionFactory;
 import org.andengine.opengl.texture.atlas.bitmap.BuildableBitmapTextureAtlas;
@@ -27,7 +29,7 @@ public class GameActivity extends BaseGameActivity {
 	private Camera mCamera;
 	
 	private ITextureRegion mSplashBackground;
-
+	private ITextureRegion mMainMenuBackground;
 	
 	private Scene mSplashScene;
 	private Scene mMainMenuScene;
@@ -46,14 +48,14 @@ public class GameActivity extends BaseGameActivity {
 			throws Exception {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
-		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_HEIGHT + 1, GameConstants.CAMERA_WIDTH + 1);
+		BuildableBitmapTextureAtlas splashTextureAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT);
 		mSplashBackground = BitmapTextureAtlasTextureRegionFactory.createFromAsset(splashTextureAtlas, this, "rosalila_logo.png");
 		
 		
 		try {
-			splashTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(1, 1, 1));
+			splashTextureAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
 		} catch (TextureAtlasBuilderException exception) {
-			Log.e(TAG, "Error building splash screen resources");
+			Log.e(TAG, exception.getMessage());
 		}		
 		splashTextureAtlas.load();
 		pOnCreateResourcesCallback.onCreateResourcesFinished();
@@ -81,24 +83,56 @@ public class GameActivity extends BaseGameActivity {
 			public void onTimePassed(TimerHandler pTimerHandler) {
 				mSplashScene.unregisterUpdateHandler(pTimerHandler);
 				
-				/*Load the main menu scene*/
+				createMenuResources();
+				createMenuScene();
+				
+				mEngine.setScene(mMainMenuScene);
 				
 			}
 		}));
 		
 		pOnPopulateSceneCallback.onPopulateSceneFinished();
-		
-		Intent intent = new Intent(this, FightActivity.class);
-		startActivity(intent);      
-		finish();
 	}
 	
-	public void createMenuResources() {
+	/* 
+	 * Loads in memory the resources used in the main menu scene
+	 * */
+	private void createMenuResources() {
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 		
 		BuildableBitmapTextureAtlas mainMenuAtlas = new BuildableBitmapTextureAtlas(getTextureManager(), GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT);
+		mMainMenuBackground = BitmapTextureAtlasTextureRegionFactory.createFromAsset(mainMenuAtlas, this, "main_menu_bg.png");
 		
+		try {
+		    mainMenuAtlas.build(new BlackPawnTextureAtlasBuilder<IBitmapTextureAtlasSource, BitmapTextureAtlas>(0, 0, 0));
+		} catch (TextureAtlasBuilderException exception) {
+			Log.e(TAG, exception.getMessage());
+		}
 		
+		mainMenuAtlas.load();
+		
+	}
+	
+	/* 
+	 * Creates and populates the Scene used as main menu
+	 * */
+	private void createMenuScene() {
+		mMainMenuScene = new Scene();
+		mMainMenuScene.setBackgroundEnabled(false);
+		
+		Sprite background = new Sprite(0, 0, GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT, mMainMenuBackground, getVertexBufferObjectManager());
+		mMainMenuScene.attachChild(background);
+		
+		mMainMenuScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
+			
+			@Override
+			public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
+				Intent intent = new Intent(GameActivity.this, FightActivity.class);
+				startActivity(intent);      
+				finish();
+				return false;
+			}
+		});
 	}
 
 }
