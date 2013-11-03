@@ -17,7 +17,6 @@ import org.andengine.entity.util.FPSLogger;
 import org.andengine.extension.physics.box2d.PhysicsConnector;
 import org.andengine.extension.physics.box2d.PhysicsFactory;
 import org.andengine.extension.physics.box2d.PhysicsWorld;
-import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.extension.physics.box2d.util.constants.PhysicsConstants;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.TextureOptions;
@@ -54,6 +53,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	protected static final String TAG = FightActivity.class.getSimpleName();
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mFaceTextureRegion;
+	
+	private BitmapTextureAtlas m2BitmapTextureAtlas;
+	private TiledTextureRegion m2FaceTextureRegion;
 
 	
 	private BitmapTextureAtlas bgBitmapTextureAtlas;
@@ -73,6 +75,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	
 	private BitmapTextureAtlas koBitmapTextureAtlas;
 	private TiledTextureRegion koFaceTextureRegion;
+	
+	private BitmapTextureAtlas buttonBitmapTextureAtlas;
+	private TiledTextureRegion buttonTextureRegion;
 
 	ArrayList<Sprite> victories_player1;
 	ArrayList<Sprite> victories_player2;
@@ -82,8 +87,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	Sprite ko;
 	
 	int ROUNDS = 5;
-	int PLAYER1_INITIAL_X = 1280/2-400;
-	int PLAYER2_INITIAL_X = 1280/2+400;
+	float PLAYER1_INITIAL_X = 1280/2-400-210/2;
+	float PLAYER2_INITIAL_X = 1280/2+400-210/2;
+	int INITIAL_Y = 400;
 	
 	private Player player1,player2;
 	
@@ -106,8 +112,11 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	@Override
 	public EngineOptions onCreateEngineOptions() {
 		final Camera camera = new Camera(0, 0, GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT);
+		
+		EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT), camera);
+		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
 
-		return new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT), camera);
+		return engineOptions;
 	}
 
 	@Override
@@ -122,6 +131,15 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				"4.png",
 				"5.png");
 		this.mBitmapTextureAtlas.load();
+		
+		this.m2BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
+		this.m2FaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 210, 210, 
+				"z1.png",
+				"z2.png",
+				"z3.png",
+				"z4.png",
+				"z5.png");
+		this.m2BitmapTextureAtlas.load();
 		
 		this.bgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1280, 720, TextureOptions.BILINEAR);
 		this.bgFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.bgBitmapTextureAtlas, this, "background.png", 0, 0, 1, 1);
@@ -146,6 +164,11 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.koBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
 		this.koFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.koBitmapTextureAtlas, this, "knockout.png", 0, 0, 1, 1);
 		this.koBitmapTextureAtlas.load();
+		
+		this.buttonBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
+		this.buttonTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.buttonBitmapTextureAtlas, this, "button.png", 0, 0, 1, 1);
+		this.buttonBitmapTextureAtlas.load();
+		
 	}
 
 	@Override
@@ -164,10 +187,12 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		final Sprite background = new Sprite(0,0,this.bgFaceTextureRegion,this.getVertexBufferObjectManager());
 
-		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,1);
-		player2 = new Player(centerX+200, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,2);
-		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1,this);
-		final ButtonKick btn_kick2 = new ButtonKick(1280-this.mFaceTextureRegion.getWidth(), 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2,this);
+		player1 = new Player(PLAYER1_INITIAL_X, INITIAL_Y, this.mFaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,1);
+		player2 = new Player(PLAYER2_INITIAL_X, INITIAL_Y, this.m2FaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,2);
+		player1.opponent=player2;
+		player2.opponent=player1;
+		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player1,this);
+		final ButtonKick btn_kick2 = new ButtonKick(1280-this.buttonTextureRegion.getWidth(), 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player2,this);
 		
 		victories_player1=new ArrayList<Sprite>();
 		victories_player2=new ArrayList<Sprite>();
@@ -201,9 +226,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			mScene.attachChild(victories_player1.get(i));
 		for(int i=0;i<victories_player2.size();i++)
 			mScene.attachChild(victories_player2.get(i));
+		mScene.attachChild(ko);
 		mScene.attachChild(player1_wins);
 		mScene.attachChild(player2_wins);
-		mScene.attachChild(ko);
 		
 		mScene.registerTouchArea(btn_kick1);
 		mScene.registerTouchArea(btn_kick2);
@@ -241,9 +266,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			boolean game_over = false;
 			for(int i=0;i<victories_player2.size();i++)
 			{
-				ko.setVisible(true);
 				if(!victories_player2.get(i).isVisible())
 				{
+					ko.setVisible(true);
 					victories_player2.get(i).setVisible(true);
 					if(i==victories_player2.size()-1)
 						game_over=true;
@@ -312,33 +337,34 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			if (pSceneTouchEvent.isActionDown())
 			{
 				this.setAlpha(1.0f);
-				if(fight_activity.player1_wins.isVisible()
-				|| fight_activity.player2_wins.isVisible())
-				{
-					System.exit(0);
-				}
+				
 				if(fight_activity.ko.isVisible())
 				{
 					fight_activity.resetRound();
 				}else
 				{
-					fight_activity.playerWinsRound(mPlayer.number);
+					//fight_activity.playerWinsRound(mPlayer.number);
+					if (!mPlayer.isMoving()) {
+						Log.d(TAG, "On Ground");
+						mPlayer.jump();	
+					} else {
+						Log.d(TAG, "Jumping");
+						mPlayer.dive();
+					}
 				}
 				
 				this.setAlpha(1.0f);			
-				fight_activity.playerWinsRound(mPlayer.number);
-				
-				if (!mPlayer.isMoving()) {
-					Log.d(TAG, "On Ground");
-					mPlayer.jump();	
-				} else {
-					Log.d(TAG, "Jumping");
-					mPlayer.dive();
-				}
 			}
 			
 			if (pSceneTouchEvent.isActionUp())	{
 				this.setAlpha(0.5f);
+				
+				if(fight_activity.player1_wins.isVisible()
+				|| fight_activity.player2_wins.isVisible())
+				{
+					//System.exit(0);
+					fight_activity.finish();
+				}
 			}
 			
 			
@@ -350,10 +376,12 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	void resetRound()
 	{
 		ko.setVisible(false);
-		player1.mBody.setTransform(PLAYER1_INITIAL_X/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 720/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
-		player2.mBody.setTransform(PLAYER2_INITIAL_X/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 720/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+		player1.mBody.setTransform((PLAYER1_INITIAL_X+210.0f/2.0f)/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, INITIAL_Y/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
+		player2.mBody.setTransform((PLAYER2_INITIAL_X+210.0f/2.0f)/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, INITIAL_Y/PhysicsConstants.PIXEL_TO_METER_RATIO_DEFAULT, 0);
 		player1.mBody.setLinearVelocity(new Vector2(0,0));
 		player2.mBody.setLinearVelocity(new Vector2(0,0));
+		player1.setCurrentTileIndex(0);
+		player2.setCurrentTileIndex(0);
 	}
 
 	@Override
@@ -412,19 +440,32 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			    
 			    if (dataA instanceof Player && dataB.equals("roof")) {
 			        Player p = (Player)dataA;
-			        p.setCurrentTileIndex(0);
+			        if(p.getCurrentTileIndex()!=4)//dead
+			        	p.setCurrentTileIndex(0);
+			        p.mBody.setLinearVelocity(new Vector2(0,0));
 			    } else if (dataB instanceof Player && dataA.equals("roof")) {
 			    	Player p = (Player)dataA;
-			        p.setCurrentTileIndex(0);
+			    	if(p.getCurrentTileIndex()!=4)//dead
+			    		p.setCurrentTileIndex(0);
+			        p.mBody.setLinearVelocity(new Vector2(0,0));
 			    } else if (dataA instanceof Player && dataB instanceof Player) {
 			    	Player playerA = (Player)dataA;
 			    	Player playerB = (Player)dataB;
 			    	
-			    	if (playerA.getY() > playerB.getY()) {
-			    		playerWinsRound(1);
-			    	} else {
-			    		playerWinsRound(2);
-			    	}
+		    		if(!ko.isVisible()
+		    				&&!player1_wins.isVisible()
+		    				&&!player2_wins.isVisible())
+		    		{
+				    	if (playerA.getY() > playerB.getY())
+				    	{
+				    		playerA.setCurrentTileIndex(4);
+				    		playerWinsRound(2);
+				    	} else
+				    	{
+				    		playerB.setCurrentTileIndex(4);
+				    		playerWinsRound(1);
+				    	}
+		    		}
 			    }
 			}
 		};

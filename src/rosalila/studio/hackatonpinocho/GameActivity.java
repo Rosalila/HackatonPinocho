@@ -127,10 +127,14 @@ public class GameActivity extends BaseGameActivity {
 		mMainMenuScene.setOnSceneTouchListener(new IOnSceneTouchListener() {
 			
 			@Override
-			public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent) {
-				Intent intent = new Intent(GameActivity.this, FightActivity.class);
-				startActivity(intent);      
-				finish();
+			public boolean onSceneTouchEvent(Scene pScene, TouchEvent pSceneTouchEvent)
+			{
+				if(pSceneTouchEvent.isActionDown())
+				{
+						Intent intent = new Intent(GameActivity.this, FightActivity.class);
+						startActivity(intent);      
+//						finish();
+				}
 				return false;
 			}
 		});
