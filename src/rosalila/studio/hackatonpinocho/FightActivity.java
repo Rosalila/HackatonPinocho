@@ -1,5 +1,7 @@
 package rosalila.studio.hackatonpinocho;
 
+import java.util.ArrayList;
+
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.physics.PhysicsHandler;
 import org.andengine.engine.options.EngineOptions;
@@ -19,6 +21,9 @@ import org.andengine.opengl.texture.atlas.bitmap.BitmapTextureAtlasTextureRegion
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.ui.activity.SimpleBaseGameActivity;
+
+import tv.ouya.console.api.OuyaController;
+import android.view.KeyEvent;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -47,7 +52,13 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private BitmapTextureAtlas bgBitmapTextureAtlas;
 	private TiledTextureRegion bgFaceTextureRegion;
 	
+	private BitmapTextureAtlas victoryBitmapTextureAtlas;
+	private TiledTextureRegion victoryFaceTextureRegion;
+	
 	Player player1,player2;
+	
+	ArrayList<Sprite> victories_player1;
+	ArrayList<Sprite> victories_player2;
 
 	// ===========================================================
 	// Constructors
@@ -79,6 +90,10 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.bgBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1280, 720, TextureOptions.BILINEAR);
 		this.bgFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.bgBitmapTextureAtlas, this, "background.png", 0, 0, 1, 1);
 		this.bgBitmapTextureAtlas.load();
+		
+		this.victoryBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
+		this.victoryFaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victoryBitmapTextureAtlas, this, "victory.png", 0, 0, 1, 1);
+		this.victoryBitmapTextureAtlas.load();
 	}
 
 	@Override
@@ -93,16 +108,35 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		final Sprite background = new Sprite(0,0,this.bgFaceTextureRegion,this.getVertexBufferObjectManager());
 		player1 = new Player(centerX, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
-		player2 = new Player(centerX, centerY+100, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
-		final ButtonKick btn_kick = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1);		
+		player2 = new Player(centerX+200, centerY, this.mFaceTextureRegion, this.getVertexBufferObjectManager());
+		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player1);
+		final ButtonKick btn_kick2 = new ButtonKick(100, 0, this.mFaceTextureRegion, this.getVertexBufferObjectManager(),player2);
 		
+		victories_player1=new ArrayList<Sprite>();
+		victories_player2=new ArrayList<Sprite>();
+		
+		for(int i=0;i<5;i++)
+		{
+			victories_player1.add(new Sprite(1280/2-60-i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager()));
+		}
+		
+		for(int i=0;i<5;i++)
+		{
+			victories_player1.add(new Sprite(1280/2+60+i*50,50,this.victoryFaceTextureRegion, this.getVertexBufferObjectManager()));
+		}
 
 		scene.attachChild(background);
 		scene.attachChild(player1);
 		scene.attachChild(player2);
-		scene.attachChild(btn_kick);
+		scene.attachChild(btn_kick1);
+		scene.attachChild(btn_kick2);
+		for(int i=0;i<victories_player1.size();i++)
+			scene.attachChild(victories_player1.get(i));
+		for(int i=0;i<victories_player2.size();i++)
+			scene.attachChild(victories_player2.get(i));
 		
-		scene.registerTouchArea(btn_kick);
+		scene.registerTouchArea(btn_kick1);
+		scene.registerTouchArea(btn_kick2);
 		scene.setOnAreaTouchListener(this);
 
 		return scene;
@@ -182,10 +216,12 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			this.mPhysicsHandler.setVelocity(FightActivity.DEMO_VELOCITY, FightActivity.DEMO_VELOCITY);
 			this.state="idle";
 			this.player=player;
+			this.setAlpha(0.2f);
 		}
 
 		@Override
-		protected void onManagedUpdate(final float pSecondsElapsed) {
+		protected void onManagedUpdate(final float pSecondsElapsed)
+		{
 			if(state!="idle")
 			{
 				if(this.mX < 0) {
@@ -210,6 +246,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		@Override
         public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+			if (pSceneTouchEvent.isActionDown())
+			{
+				this.setAlpha(1.0f);
+			}
+			if (pSceneTouchEvent.isActionUp())
+			{
+				this.setAlpha(0.5f);
+			}
 			player.touched();
 			return mFlippedHorizontal;
 		}
@@ -221,10 +265,22 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			ITouchArea pTouchArea, float pTouchAreaLocalX,
 			float pTouchAreaLocalY)
 	{
-		if(pTouchAreaLocalX<1280/2)
-		{
-			
-		}
 		return false;
 	}
+	
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+    	if(OuyaController.BUTTON_L1==event.getKeyCode())
+    	{
+    		player1.touched();
+    	}else if(OuyaController.BUTTON_R1==event.getKeyCode())
+    	{
+    		player2.touched();
+    	}else
+    	{
+    		System.exit(0);
+    	}
+        return true;
+    }
 }
