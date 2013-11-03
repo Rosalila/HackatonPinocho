@@ -417,7 +417,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			    	Player p = (Player)dataA;
 			        p.setCurrentTileIndex(0);
 			    } else if (dataA instanceof Player && dataB instanceof Player) {
+			    	Player playerA = (Player)dataA;
+			    	Player playerB = (Player)dataB;
 			    	
+			    	if (playerA.getY() > playerB.getY()) {
+			    		playerWinsRound(1);
+			    	} else {
+			    		playerWinsRound(2);
+			    	}
 			    }
 			}
 		};
