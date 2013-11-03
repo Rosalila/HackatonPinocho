@@ -139,4 +139,16 @@ public class GameActivity extends BaseGameActivity {
 			}
 		});
 	}
+	
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+    	if(OuyaController.BUTTON_L1==event.getKeyCode()
+    	   ||OuyaController.BUTTON_R1==event.getKeyCode())
+    	{
+			Intent intent = new Intent(GameActivity.this, FightActivity.class);
+			startActivity(intent);  
+    	}
+        return true;
+    }
 }
