@@ -44,7 +44,7 @@ public  class Player extends AnimatedSprite {
 		mWorld = world;
 		
 		//Hitbox 
-		Rectangle hitbox = new Rectangle(pX, pY, 150, 150, getVertexBufferObjectManager());
+		Rectangle hitbox = new Rectangle(pX, pY, 150, 200, getVertexBufferObjectManager());
 		mBody = PhysicsFactory.createBoxBody(mWorld, hitbox, BodyType.DynamicBody, mFixture);
 		mBody.setFixedRotation(true);
 		mBody.setUserData(this);
@@ -127,7 +127,7 @@ public  class Player extends AnimatedSprite {
 	}
 	
 	public boolean isMoving() {
-		return this.getY() <= GameConstants.CAMERA_HEIGHT - 300;
+		return this.getY() <= GameConstants.CAMERA_HEIGHT - 500;
 	}
 	
 	private void changeSpeed(Vector2 desiredSpeed) {

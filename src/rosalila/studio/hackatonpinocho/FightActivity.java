@@ -1,7 +1,12 @@
 package rosalila.studio.hackatonpinocho;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
+import org.andengine.audio.music.Music;
+import org.andengine.audio.music.MusicFactory;
+import org.andengine.audio.sound.Sound;
+import org.andengine.audio.sound.SoundFactory;
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.ScreenOrientation;
@@ -105,6 +110,15 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private Scene mScene;
 	
 	private boolean mIsFinished = false;
+	
+	//Sounds
+	private Sound mLightingSound;
+	private Sound mJumpSound;
+	private Sound mAttackSound;
+	private Music mMusic;
+	private Sound mWinSound;
+	
+	
 
 	// ===========================================================
 	// Constructors
@@ -117,6 +131,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	// ===========================================================
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
+	
+	public void setPlayingMusic(boolean play) {
+		if (play) {
+			mMusic.play();
+		} else {
+			mMusic.stop();
+		}
+	}
 
 	@Override
 	public EngineOptions onCreateEngineOptions() {
@@ -124,7 +146,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		EngineOptions engineOptions = new EngineOptions(true, ScreenOrientation.LANDSCAPE_FIXED, new RatioResolutionPolicy(GameConstants.CAMERA_WIDTH, GameConstants.CAMERA_HEIGHT), camera);
 		engineOptions.getTouchOptions().setNeedsMultiTouch(true);
-
+		engineOptions.getAudioOptions().setNeedsMusic(true)
+		.setNeedsSound(true);
+		
 		return engineOptions;
 	}
 
@@ -133,7 +157,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		BitmapTextureAtlasTextureRegionFactory.setAssetBasePath("gfx/");
 
 		this.mBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
-		this.mFaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 210, 210, 
+		this.mFaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 250, 250, 
 				"1.png",
 				"2.png",
 				"3.png",
@@ -142,7 +166,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.mBitmapTextureAtlas.load();
 		
 		this.m2BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 1024, 1024, TextureOptions.BILINEAR);
-		this.m2FaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 210, 210, 
+		this.m2FaceTextureRegion = Util.createTiledTextureRegionFromAsset(getTextureManager(), this, 250, 250, 
 				"z1.png",
 				"z2.png",
 				"z3.png",
@@ -155,11 +179,11 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		this.bgBitmapTextureAtlas.load();
 		
 		this.victory1BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
-		this.victory1FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory1BitmapTextureAtlas, this, "victory1.png", 0, 0, 1, 1);
+		this.victory1FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory1BitmapTextureAtlas, this, "victory2.png", 0, 0, 1, 1);
 		this.victory1BitmapTextureAtlas.load();
 		
 		this.victory2BitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 40, 60, TextureOptions.BILINEAR);
-		this.victory2FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory2BitmapTextureAtlas, this, "victory2.png", 0, 0, 1, 1);
+		this.victory2FaceTextureRegion = BitmapTextureAtlasTextureRegionFactory.createTiledFromAsset(this.victory2BitmapTextureAtlas, this, "victory1.png", 0, 0, 1, 1);
 		this.victory2BitmapTextureAtlas.load();
 		
 		this.player1winsBitmapTextureAtlas = new BitmapTextureAtlas(this.getTextureManager(), 687, 460, TextureOptions.BILINEAR);
@@ -189,6 +213,21 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		}
 		
 		explosionTextureAtlas.load();
+		
+		//Create sounds
+		SoundFactory.setAssetBasePath("sfx/");
+		MusicFactory.setAssetBasePath("sfx/");
+		
+		try {
+			mMusic = MusicFactory.createMusicFromAsset(getMusicManager(), this, "migrahack.ogg");
+			mLightingSound = SoundFactory.createSoundFromAsset(getSoundManager(), this, "lighting.ogg");
+			mJumpSound = SoundFactory.createSoundFromAsset(getSoundManager(), this, "jump.ogg");
+			mAttackSound = SoundFactory.createSoundFromAsset(getSoundManager(), this, "dive.ogg");
+			mWinSound = SoundFactory.createSoundFromAsset(getSoundManager(), this, "win.ogg");
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		
 		
 	}
 
@@ -257,6 +296,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		
 		createGroundAndWalls();
 		
+		mMusic.setLooping(true);
+		mMusic.play();
+		
 		return mScene;
 	}
 	
@@ -265,6 +307,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	 * */
 	private void playerWinsRound(int player_number)
 	{
+		
+		mWinSound.play();
 		if(player_number == 1)
 		{
 			boolean game_over = false;
@@ -324,7 +368,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightWall, rightWallBody));
 		mScene.attachChild(rightWall);
 		
-		Rectangle roof = new Rectangle(0, GameConstants.CAMERA_HEIGHT, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
+		Rectangle roof = new Rectangle(0, GameConstants.CAMERA_HEIGHT - 100, GameConstants.CAMERA_WIDTH, 1.0f, getVertexBufferObjectManager());
+		roof.setVisible(false);
 		Body roofBody = PhysicsFactory.createBoxBody(mPhysicsWorld, roof, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(roof, roofBody));
 		roofBody.setUserData("roof");
@@ -360,8 +405,10 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				} else {
 					if (!mPlayer.isMoving()) {
 						mPlayer.jump();	
+						fight_activity.mJumpSound.play();
 					} else {
 						mPlayer.dive();
+						fight_activity.mAttackSound.play();
 					}
 				}
 				
@@ -372,9 +419,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				this.setAlpha(0.5f);
 				
 				if(fight_activity.player1_wins.isVisible()
-				|| fight_activity.player2_wins.isVisible())
-				{
-					//System.exit(0);
+				|| fight_activity.player2_wins.isVisible()) {
 					fight_activity.finish();
 				}
 			}
@@ -478,13 +523,12 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				    	
 				    	final AnimatedSprite damage_sprite = new AnimatedSprite(posX, playerA.getY(), mExplosionTiledTexture, getVertexBufferObjectManager());
 				    	mScene.attachChild(damage_sprite);
-				    	damage_sprite.animate(200, false, new IAnimationListener() {
+				    	damage_sprite.animate(50, false, new IAnimationListener() {
 							
 							@Override
 							public void onAnimationStarted(AnimatedSprite pAnimatedSprite,
 									int pInitialLoopCount) {
-								// TODO Auto-generated method stub
-								
+								mLightingSound.play();
 							}
 							
 							@Override
@@ -515,6 +559,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 							    		playerWinsRound(1);
 							    	}
 							    	
+							    	mLightingSound.stop();
 							    	mScene.detachChild(damage_sprite);
 							    	
 					    		}
