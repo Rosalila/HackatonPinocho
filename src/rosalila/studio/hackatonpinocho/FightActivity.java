@@ -98,6 +98,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	Sprite player2_wins;
 	Sprite ko;
 	
+	ButtonKick button_kick1;
+	ButtonKick button_kick2;
+	
 	int ROUNDS = 5;
 	float PLAYER1_INITIAL_X = 1280/2-400-210/2;
 	float PLAYER2_INITIAL_X = 1280/2+400-210/2;
@@ -251,8 +254,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		player2 = new Player(PLAYER2_INITIAL_X, INITIAL_Y, this.m2FaceTextureRegion, this.getVertexBufferObjectManager(), mPhysicsWorld,2);
 		player1.opponent=player2;
 		player2.opponent=player1;
-		final ButtonKick btn_kick1 = new ButtonKick(0, 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player1,this);
-		final ButtonKick btn_kick2 = new ButtonKick(1280-this.buttonTextureRegion.getWidth(), 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player2,this);
+		button_kick1 = new ButtonKick(0, 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player1,this);
+		button_kick2 = new ButtonKick(1280-this.buttonTextureRegion.getWidth(), 0, this.buttonTextureRegion, this.getVertexBufferObjectManager(),player2,this);
 		
 		victories_player1=new ArrayList<Sprite>();
 		victories_player2=new ArrayList<Sprite>();
@@ -280,8 +283,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		mScene.attachChild(background);
 		mScene.attachChild(player1);
 		mScene.attachChild(player2);
-		mScene.attachChild(btn_kick1);
-		mScene.attachChild(btn_kick2);
+		mScene.attachChild(button_kick1);
+		mScene.attachChild(button_kick2);
 		for(int i=0;i<victories_player1.size();i++)
 			mScene.attachChild(victories_player1.get(i));
 		for(int i=0;i<victories_player2.size();i++)
@@ -290,8 +293,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		mScene.attachChild(player1_wins);
 		mScene.attachChild(player2_wins);
 		
-		mScene.registerTouchArea(btn_kick1);
-		mScene.registerTouchArea(btn_kick2);
+		mScene.registerTouchArea(button_kick1);
+		mScene.registerTouchArea(button_kick2);
 		mScene.setOnAreaTouchListener(this);
 		
 		createGroundAndWalls();
@@ -454,10 +457,44 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
     {
     	if(OuyaController.BUTTON_L1==event.getKeyCode())
     	{ 
-    		player1.jump();
+    		button_kick1.setAlpha(1.0f);
+			
+			if(button_kick1.fight_activity.ko.isVisible())
+			{
+				button_kick1.fight_activity.resetRound();
+			} else {
+				if (!button_kick1.mPlayer.isMoving()) {
+					button_kick1.mPlayer.jump();	
+				} else {
+					button_kick1.mPlayer.dive();
+				}
+			}
+			
+			button_kick1.setAlpha(1.0f);
     	}else if(OuyaController.BUTTON_R1==event.getKeyCode())
     	{
-    		player2.jump();
+    		button_kick2.setAlpha(1.0f);
+			
+			if(button_kick2.fight_activity.ko.isVisible())
+			{
+				button_kick2.fight_activity.resetRound();
+			} else {
+				if (!button_kick2.mPlayer.isMoving()) {
+					button_kick2.mPlayer.jump();	
+				} else {
+					button_kick2.mPlayer.dive();
+				}
+			}
+			
+			button_kick2.setAlpha(1.0f);
+    	}else if(OuyaController.BUTTON_O==event.getKeyCode())
+    	{
+			if(button_kick2.fight_activity.player1_wins.isVisible()
+			|| button_kick2.fight_activity.player2_wins.isVisible())
+			{
+				//System.exit(0);
+				button_kick2.fight_activity.finish();
+			}
     	}else
     	{
     		System.exit(0);
