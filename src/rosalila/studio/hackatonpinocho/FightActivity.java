@@ -229,7 +229,8 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		}
 		
 		@Override
-        public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY) {
+        public boolean onAreaTouched(final TouchEvent pSceneTouchEvent, final float pTouchAreaLocalX, final float pTouchAreaLocalY)
+		{
 			if (pSceneTouchEvent.isActionDown())
 			{
 				this.setAlpha(1.0f);
