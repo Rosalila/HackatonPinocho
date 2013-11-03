@@ -8,22 +8,19 @@ import org.andengine.extension.physics.box2d.util.Vector2Pool;
 import org.andengine.opengl.texture.region.TiledTextureRegion;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
-import android.hardware.SensorManager;
-import android.util.Log;
-
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 
-public  class Player extends AnimatedSprite 
-    {
+public  class Player extends AnimatedSprite {
 
 	private static final String TAG = Player.class.getSimpleName();
 	public Body mBody;
 	private PhysicsWorld mWorld;
 	private FixtureDef mFixture = PhysicsFactory.createFixtureDef(0.5f, 0.5f, 0.5f);
 	private FacingSide mSide;
+	private boolean mIsOnGround;
 	int number;
 	
 	private Vector2 mDesiredSpeed = new Vector2(0.0f, 20.0f);
@@ -40,6 +37,8 @@ public  class Player extends AnimatedSprite
 		super(pX, pY, pTextureRegion, pVertexBufferObjectManager);
 		mWorld = world;
 		mBody = PhysicsFactory.createBoxBody(mWorld, this, BodyType.DynamicBody, mFixture);
+		mBody.setFixedRotation(true);
+		mBody.setUserData(this);
 		mWorld.registerPhysicsConnector(new PhysicsConnector(this, mBody));
 		mPendingJump = false;
 		mSide = number == 1? FacingSide.Right : FacingSide.Left;
@@ -48,33 +47,33 @@ public  class Player extends AnimatedSprite
 	
 	public void jump() {
 		mPendingJump = true;
+		setCurrentTileIndex(1);
 	}
 	
 	public void dive() {
 		mPendingDive = true;
+		setCurrentTileIndex(2);
 	}
 	
 	public void onManagedUpdate(float elapsedSeconds) {
 		super.onManagedUpdate(elapsedSeconds);
-		
-		
+	
 		
 		if (mPendingJump) {
 			changeSpeed(mDesiredSpeed);
 			mPendingJump = false;
 		}
-		
-		
+			
 		if (mPendingDive) {
 			Vector2 desiredVel = Vector2Pool.obtain();
 			switch (mSide) {
 			case Right:
-				desiredVel.x = 40.0f;
+				desiredVel.x = 80.0f;
 				desiredVel.y = -20.0f;
 				break;
 				
 			case Left:
-				desiredVel.x = -40.0f;
+				desiredVel.x = -80.0f;
 				desiredVel.y = -20.0f;
 				break;
 			}
@@ -86,12 +85,10 @@ public  class Player extends AnimatedSprite
 	}
 	
 	public boolean isMoving() {
-		Vector2 velocity = mBody.getLinearVelocity();
-		return velocity.len() == 0;
+		return this.getY() < GameConstants.CAMERA_HEIGHT - 300;
 	}
 	
 	private void changeSpeed(Vector2 desiredSpeed) {
-		Log.d(TAG, "Desired velocity x: " + desiredSpeed.x + " and y: " + desiredSpeed.y);
 		Vector2 velocity = mBody.getLinearVelocity();
 		
 		float velocityChangeY = desiredSpeed.y - velocity.y;

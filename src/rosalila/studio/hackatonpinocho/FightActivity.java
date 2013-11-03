@@ -35,6 +35,11 @@ import android.view.KeyEvent;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
+import com.badlogic.gdx.physics.box2d.Contact;
+import com.badlogic.gdx.physics.box2d.ContactImpulse;
+import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.Fixture;
+import com.badlogic.gdx.physics.box2d.Manifold;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -46,6 +51,7 @@ import com.badlogic.gdx.physics.box2d.BodyDef.BodyType;
 
 public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouchListener {
 	
+	protected static final String TAG = FightActivity.class.getSimpleName();
 	private BitmapTextureAtlas mBitmapTextureAtlas;
 	private TiledTextureRegion mFaceTextureRegion;
 
@@ -150,6 +156,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 		mScene.setBackground(new Background(0.09804f, 0.6274f, 0.8784f));
 		
 		mPhysicsWorld = new PhysicsWorld(new Vector2(0.0f, SensorManager.GRAVITY_EARTH), false);
+		mPhysicsWorld.setContactListener(createContactListener());
 		mScene.registerUpdateHandler(mPhysicsWorld);
 		
 		final float centerX = (GameConstants.CAMERA_WIDTH - this.mFaceTextureRegion.getWidth()) / 2;
@@ -255,23 +262,28 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	private void createGroundAndWalls() {
 		Rectangle ground = new Rectangle(0, 0, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
 		Body groundBody = PhysicsFactory.createBoxBody(mPhysicsWorld, ground, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
+		groundBody.setUserData("ground");
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(ground, groundBody));
 		mScene.attachChild(ground);
 		
 		Rectangle leftWall = new Rectangle(0, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
 		Body leftWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, leftWall, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
+		leftWallBody.setUserData("left");
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(leftWall, leftWallBody));
 		mScene.attachChild(leftWall);
 		
 		Rectangle rightWall = new Rectangle(GameConstants.CAMERA_WIDTH, 0, 2.0f, GameConstants.CAMERA_HEIGHT, getVertexBufferObjectManager());
 		Body rightWallBody = PhysicsFactory.createBoxBody(mPhysicsWorld, rightWall, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
+		rightWallBody.setUserData("right");
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(rightWall, rightWallBody));
 		mScene.attachChild(rightWall);
 		
 		Rectangle roof = new Rectangle(0, GameConstants.CAMERA_HEIGHT, GameConstants.CAMERA_WIDTH, 2.0f, getVertexBufferObjectManager());
 		Body roofBody = PhysicsFactory.createBoxBody(mPhysicsWorld, roof, BodyType.StaticBody, GameConstants.GROUND_FIXTURE);
 		mPhysicsWorld.registerPhysicsConnector(new PhysicsConnector(roof, roofBody));
+		roofBody.setUserData("roof");
 		mScene.attachChild(roof);
+		
 	}
 	
 	
@@ -304,7 +316,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				|| fight_activity.player2_wins.isVisible())
 				{
 					System.exit(0);
-				}else
+				}
 				if(fight_activity.ko.isVisible())
 				{
 					fight_activity.resetRound();
@@ -312,19 +324,24 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				{
 					fight_activity.playerWinsRound(mPlayer.number);
 				}
+				
+				this.setAlpha(1.0f);			
+				fight_activity.playerWinsRound(mPlayer.number);
+				
+				if (!mPlayer.isMoving()) {
+					Log.d(TAG, "On Ground");
+					mPlayer.jump();	
+				} else {
+					Log.d(TAG, "Jumping");
+					mPlayer.dive();
+				}
 			}
-			if (pSceneTouchEvent.isActionUp())
-			{
+			
+			if (pSceneTouchEvent.isActionUp())	{
 				this.setAlpha(0.5f);
 			}
 			
-			if (!mPlayer.isMoving()) {
-				Log.d(TAG, "On Ground");
-				mPlayer.jump();	
-			} else {
-				Log.d(TAG, "Jumping");
-				mPlayer.dive();
-			}
+			
 			
 			return false;
 		}
@@ -360,5 +377,49 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
     		System.exit(0);
     	}
         return true;
+    }
+    
+    private ContactListener createContactListener() {
+    	return new ContactListener() {
+			
+			@Override
+			public void preSolve(Contact contact, Manifold oldManifold) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void postSolve(Contact contact, ContactImpulse impulse) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void endContact(Contact contact) {
+				// TODO Auto-generated method stub
+			}
+			
+			@Override
+			public void beginContact(Contact contact) {
+			    Fixture fixtureA = contact.getFixtureA();
+			    Fixture fixtureB = contact.getFixtureB();
+			    
+			    Body bodyA = fixtureA.getBody();
+			    Body bodyB = fixtureB.getBody();
+			    
+			    Object dataA = bodyA.getUserData();
+			    Object dataB = bodyB.getUserData();
+			    
+			    if (dataA instanceof Player && dataB.equals("roof")) {
+			        Player p = (Player)dataA;
+			        p.setCurrentTileIndex(0);
+			    } else if (dataB instanceof Player && dataA.equals("roof")) {
+			    	Player p = (Player)dataA;
+			        p.setCurrentTileIndex(0);
+			    } else if (dataA instanceof Player && dataB instanceof Player) {
+			    	
+			    }
+			}
+		};
     }
 }
