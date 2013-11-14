@@ -454,7 +454,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 	
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
-    {
+    {    	
     	if(OuyaController.BUTTON_L1==event.getKeyCode())
     	{ 
     		button_kick1.setAlpha(1.0f);
@@ -471,7 +471,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			}
 			
 			button_kick1.setAlpha(1.0f);
-    	}else if(OuyaController.BUTTON_R1==event.getKeyCode())
+			return true;
+    	}
+    	else if(OuyaController.BUTTON_R1==event.getKeyCode())
     	{
     		button_kick2.setAlpha(1.0f);
 			
@@ -487,7 +489,9 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			}
 			
 			button_kick2.setAlpha(1.0f);
-    	}else if(OuyaController.BUTTON_O==event.getKeyCode())
+			return true;
+    	}
+    	else if(OuyaController.BUTTON_O==event.getKeyCode())
     	{
 			if(button_kick2.fight_activity.player1_wins.isVisible()
 			|| button_kick2.fight_activity.player2_wins.isVisible())
@@ -495,11 +499,14 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				//System.exit(0);
 				button_kick2.fight_activity.finish();
 			}
-    	}else
+			return true;
+    	}else if(OuyaController.BUTTON_A==event.getKeyCode())
     	{
-    		System.exit(0);
+    		button_kick2.fight_activity.finish();
+    		return true;
     	}
-        return true;
+    	
+        return super.onKeyDown(keyCode, event);
     }
     
     private ContactListener createContactListener() {

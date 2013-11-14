@@ -147,8 +147,9 @@ public class GameActivity extends BaseGameActivity {
     	   ||OuyaController.BUTTON_R1==event.getKeyCode())
     	{
 			Intent intent = new Intent(GameActivity.this, FightActivity.class);
-			startActivity(intent);  
+			startActivity(intent);
+			return true;
     	}
-        return true;
+        return super.onKeyDown(keyCode, event);
     }
 }
