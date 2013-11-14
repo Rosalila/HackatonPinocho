@@ -546,7 +546,7 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 			        	p.setCurrentTileIndex(0);
 			        p.mBody.setLinearVelocity(new Vector2(0,0));
 			    } else if (dataB instanceof Player && dataA.equals("roof")) {
-			    	Player p = (Player)dataA;
+			    	Player p = (Player)dataB;
 			    	if(p.getCurrentTileIndex()!=4)//dead
 			    		p.setCurrentTileIndex(0);
 			        p.mBody.setLinearVelocity(new Vector2(0,0));
@@ -561,6 +561,32 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 				    		posX = playerA.getX();
 				    	} else {
 				    	    posX = playerB.getX();	
+				    	}
+				    	
+//				    	//Verificar quien gano
+//				    	Log.d("testa", "-----------------");
+//				    	Log.d("testa", ""+playerA.number);
+//				    	Log.d("testa", ""+playerB.number);
+//				    	Log.d("testa", ""+playerA.getCurrentTileIndex());
+//				    	Log.d("testa", ""+playerB.getCurrentTileIndex());
+//				    	Log.d("testa", ""+playerA.getY());
+//				    	Log.d("testa", ""+playerB.getY());
+				    	
+				    	final int winner;
+				    	
+				    	if (playerA.getY() < playerB.getY()
+				    		&& playerA.getCurrentTileIndex()==2)
+				    	{
+				    		winner=1;
+				    	}
+				    	else if(playerB.getY() < playerA.getY()
+				    		&& playerB.getCurrentTileIndex()==2)
+				    	{
+				    		winner=2;
+				    	}
+				    	else
+				    	{
+				    		return;
 				    	}
 				    	
 				    	mIsFinished = true;
@@ -594,13 +620,20 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 								if(!ko.isVisible()
 					    				&&!player1_wins.isVisible()
 					    				&&!player2_wins.isVisible()) {
-							    	if (playerA.getY() > playerB.getY()) {
-							    		playerA.setCurrentTileIndex(4);
-							    		playerWinsRound(2);
-							    	} else
+									
+//							    	Log.d("testa", ""+playerA.getY());//<- TF?
+//							    	Log.d("testa", ""+playerB.getY());//<- TF?
+									
+							    	if (winner==1)
 							    	{
+							    		Log.d("testa", "A gana");
 							    		playerB.setCurrentTileIndex(4);
-							    		playerWinsRound(1);
+							    		playerWinsRound(playerA.number);
+							    	}else
+							    	{
+							    		Log.d("testa", "B gana");
+							    		playerA.setCurrentTileIndex(4);
+							    		playerWinsRound(playerB.number);
 							    	}
 							    	
 							    	mLightingSound.stop();
