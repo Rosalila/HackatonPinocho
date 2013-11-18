@@ -626,12 +626,12 @@ public class FightActivity extends SimpleBaseGameActivity implements IOnAreaTouc
 									
 							    	if (winner==1)
 							    	{
-							    		Log.d("testa", "A gana");
+//							    		Log.d("testa", "A gana");
 							    		playerB.setCurrentTileIndex(4);
 							    		playerWinsRound(playerA.number);
 							    	}else
 							    	{
-							    		Log.d("testa", "B gana");
+//							    		Log.d("testa", "B gana");
 							    		playerA.setCurrentTileIndex(4);
 							    		playerWinsRound(playerB.number);
 							    	}
